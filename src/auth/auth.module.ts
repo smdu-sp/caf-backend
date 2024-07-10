@@ -7,6 +7,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ValidarLoginMiddleware } from './middlewares/validar-login.middleware';
 import { RtStrategy } from './strategies/rt.strategy';
+import * as dotenv from 'dotenv'; // Importe o dotenv
+
+dotenv.config(); // Carregue as variáveis de ambiente do arquivo .env
 
 @Module({
   controllers: [AuthController],
@@ -14,7 +17,7 @@ import { RtStrategy } from './strategies/rt.strategy';
   imports: [
     UsuariosModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET, 
       signOptions: {
         expiresIn: '1d',
       },
