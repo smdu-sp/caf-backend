@@ -13,8 +13,11 @@ export class FeriadoController {
 
   @Permissoes('DEV', 'ADM')
   @Post('criar')
-  criarFeiado(@Body() createFeriadoDto: CreateFeriadoDto, @UsuarioAtual() usuario: Usuario) {
-    return this.feriadoService.criarFeiado(createFeriadoDto, usuario.id);
+  criarFeiado(
+    @Body() createFeriadoDto: CreateFeriadoDto, 
+    @UsuarioAtual() usuario: Usuario) {
+    return this.feriadoService.criarFeiado(
+      createFeriadoDto, usuario.nome, usuario.login, usuario.email, usuario.permissao, +usuario.status );
   }
 
   @Permissoes('DEV', 'ADM')
