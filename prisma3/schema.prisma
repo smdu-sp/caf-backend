@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/feriados/client"
+}
+
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL_FERIADOS")
+}
+
+enum Permissao {
+  DEV
+  SUP
+  ADM
+  USR
+}
+
+model Usuario {
+  id            String      @id @default(uuid())
+  nome          String
+  login         String      @unique
+  email         String      @unique
+  permissao     Permissao   @default(USR)
+  status        Int         @default(1)
+
+  log             Log[]
+
+  ultimologin   DateTime    @default(now())
+  criadoEm      DateTime    @default(now())
+  atualizadoEm  DateTime    @default(now()) @updatedAt
+
+  @@map("usuarios")
+}
+
+model Feriados {
+  id              String        @id @default(uuid())
+  nome            String
+  data            DateTime      @unique     @db.Date
+  tipo            String
+  nivel           String
+  status          Int
+  modo            Int
+  descricao       String?
+
+  log             Log[]
+
+  criadoEm        DateTime      @default(now())
+  atualizadoEm    DateTime      @default(now()) @updatedAt
+
+  @@map("feriados")
+}
+
+model Recorrente {
+  id              String        @id @default(uuid())
+  
+  nome            String
+  data            DateTime      @unique     @db.Date
+  tipo            String
+  nivel           String
+  status          Int
+  modo            Int
+  descricao       String?
+
+  criadoEm        DateTime      @default(now())
+  atualizadoEm    DateTime      @default(now()) @updatedAt
+
+  @@map("recorrente")
+}
+
+model Log {
+  id              String        @id @default(uuid())
+  id_feriado      String
+  feriados        Feriados      @relation(fields: [id_feriado], references: [id])
+  estado          Json?
+  id_usuario      String
+  usuario         Usuario       @relation(fields: [id_usuario], references: [id])
+
+  criadoEm        DateTime      @default(now())
+
+  @@map("log")
+}
