@@ -21,9 +21,14 @@ export class FeriadoController {
   }
 
   @Permissoes('DEV', 'ADM')
-  @Patch('atualizar/:data')
-  atualizar(@Param('data') dataUp: Date, @Body() updateFeriadoDto: UpdateFeriadoDto, @UsuarioAtual() usuario: Usuario) {
-    return this.feriadoService.atualizar(dataUp, updateFeriadoDto, usuario.id);
+  @Patch('atualizar/:id')
+  atualizar(
+    @Param('id') id: string,
+    @Query('modo') modo: string,
+    @Body() updateFeriadoDto: UpdateFeriadoDto,
+    @UsuarioAtual() usuario: Usuario
+  ) {
+    return this.feriadoService.atualizar(id, +modo, updateFeriadoDto, usuario.nome, usuario.login, usuario.email, usuario.permissao, +usuario.status);
   }
 
   @Permissoes('ADM', 'DEV')
@@ -106,5 +111,14 @@ export class FeriadoController {
   @Get("recorrente/:id")
   buscarRecorrenteId(@Param("id") id: string) {
     return this.feriadoService.buscarRecorrenteId(id)
+  }
+
+  @IsPublic()
+  @Get('buscar/:id')
+  bucarUnico(
+    @Param('id') id: string,
+    @Query('modo') modo: string
+  ){
+    return this.feriadoService.bucarUnico(id, +modo)
   }
 }
