@@ -7,7 +7,7 @@ import { UsuarioAtual } from 'src/auth/decorators/usuario-atual.decorator';
 import { Usuario } from '@prisma/client';
 import { IsPublic } from 'src/auth/decorators/is-public.decorator';
 
-@Controller('feriado')
+@Controller('feriados')
 export class FeriadoController {
   constructor(private readonly feriadoService: FeriadoService) {}
 

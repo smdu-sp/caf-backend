@@ -65,6 +65,8 @@ model Recorrente {
   modo            Int
   descricao       String?
 
+  log             Log[]
+
   criadoEm        DateTime      @default(now())
   atualizadoEm    DateTime      @default(now()) @updatedAt
 
@@ -73,8 +75,10 @@ model Recorrente {
 
 model Log {
   id              String        @id @default(uuid())
-  id_feriado      String
-  feriados        Feriados      @relation(fields: [id_feriado], references: [id])
+  id_feriado      String?
+  feriados        Feriados?      @relation(fields: [id_feriado], references: [id])
+  id_recorrentes  String?
+  recorrentes     Recorrente?      @relation(fields: [id_recorrentes], references: [id])
   estado          Json?
   id_usuario      String
   usuario         Usuario       @relation(fields: [id_usuario], references: [id])

@@ -13,9 +13,10 @@ export class FeriadoService {
     private app: AppService,
   ) { }
 
-  async gera_log(id_feriado: string, estado: any, id_usuario: string) {
+  async gera_log(id_feriado?: string, estado?: any, id_usuario?: string, id_recorrentes?: string) {
+
     await this.prisma3.log.create({
-      data: { id_feriado, estado: estado, id_usuario }
+      data: { id_feriado, estado: estado, id_usuario, id_recorrentes }
     })
   }
   async criarFeiado(
@@ -58,20 +59,20 @@ export class FeriadoService {
       const feriado = await this.prisma3.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
-      await this.gera_log(feriado.id, feriado, usuarioFeriado.id)
+      await this.gera_log(feriado.id, feriado, usuarioFeriado.id, null)
       return [recorrente, feriado];
     } else {
       const criar = await this.prisma3.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
-      await this.gera_log(criar.id, criar, usuarioFeriado.id)
+      await this.gera_log(criar.id, criar, usuarioFeriado.id, null)
       return criar;
     }
   }
 
   async atualizar(
     id: string,
-    modoAtualizar: number,
+    modoFeriado: number,
     updateFeriadoDto: UpdateFeriadoDto,
     nomeUsuario: string,
     login: string,
@@ -106,9 +107,7 @@ export class FeriadoService {
 
     const { nome, data, descricao, nivel, tipo, modo, status } = updateFeriadoDto
     const novadata = data.toString().split("T")[0] + "T00:00:00.000Z";
-    console.log(nome, novadata, descricao, nivel, tipo, modo, status);
-
-    if (modoAtualizar === 0) {
+    if (modoFeriado === 0) {
       const recorrente = await this.prisma3.recorrente.update({
         where: {
           id
@@ -118,22 +117,21 @@ export class FeriadoService {
         }
       })
       if (!recorrente) throw new ForbiddenException("Não foi possivel atualizar este feriado.")
-      await this.gera_log(recorrente.id, recorrente, usuarioFeriado.id)
+      await this.gera_log(null, recorrente, usuarioFeriado.id, recorrente.id)
       return recorrente
+    } else {
+      const feriados = await this.prisma3.feriados.update({
+        where: {
+          id
+        },
+        data: {
+          nome, data: novadata, descricao, nivel, tipo, modo, status
+        }
+      })
+      if (!feriados) throw new ForbiddenException("Não foi possivel atualizar este feriado.")
+      await this.gera_log(feriados.id, feriados, usuarioFeriado.id, null)
+      return feriados
     }
-    
-    
-    const recorrente = await this.prisma3.feriados.update({
-      where: {
-        id
-      },
-      data: {
-        nome, data: novadata, descricao, nivel, tipo, modo, status
-      }
-    })
-    if (!recorrente) throw new ForbiddenException("Não foi possivel atualizar este feriado.")
-    await this.gera_log(recorrente.id, recorrente, usuarioFeriado.id)
-    return recorrente
   }
 
   @Cron(CronExpression.EVERY_YEAR)
@@ -215,13 +213,13 @@ export class FeriadoService {
       const feriado = await this.prisma3.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
-      await this.gera_log(feriado.id, feriado, usuario_id)
+      await this.gera_log(null, feriado, usuario_id, recorrente.id)
       return [recorrente, feriado];
     } else {
       const criar = await this.prisma3.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
-      await this.gera_log(criar.id, criar, usuario_id)
+      await this.gera_log(criar.id, criar, usuario_id, null)
       return criar;
     }
   }
@@ -469,7 +467,6 @@ export class FeriadoService {
   }
 
   async bucarUnico(id: string, modo: number) {
-    console.log(modo);
     if (modo === 0) {
       const feriado = this.prisma3.recorrente.findUnique({
         where: {
