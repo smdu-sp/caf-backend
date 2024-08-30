@@ -29,5 +29,37 @@ model Usuario {
   criadoEm      DateTime    @default(now())
   atualizadoEm  DateTime    @default(now()) @updatedAt
 
+  unidade_id    String?
+  unidade       Unidade?    @relation(fields: [unidade_id], references: [id])
+  cargos        Cargo[]
+
   @@map("usuarios")
+}
+
+model Unidade {
+  id     String  @id @default(uuid())
+  nome   String  @unique
+  sigla  String  @unique
+  codigo String  @unique
+  status Boolean @default(true)
+
+  usuarios Usuario[]
+
+  @@map("unidades")
+}
+
+enum TipoCargo {
+  EFETIVO
+  COMISSIONADO
+}
+
+model Cargo {
+  id        String  @id @default(uuid())
+  nome      String  @unique
+  codigo    String  @unique
+  status    Boolean @default(true)
+
+  usuarios  Usuario[]
+
+  @@map("cargos")
 }

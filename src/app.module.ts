@@ -7,12 +7,12 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RoleGuard } from './auth/guards/role.guard';
 import { PrismaModule } from './prisma/prisma.module';
-import { Prisma2Module } from './prisma2/prisma2.module';
+import { SGUModule } from './sgu/sgu.module';
 import { FeriadoModule } from './feriado/feriado.module';
 
 @Global()
 @Module({
-  imports: [UsuariosModule, AuthModule, PrismaModule, Prisma2Module, FeriadoModule],
+  imports: [UsuariosModule, AuthModule, PrismaModule, SGUModule, FeriadoModule],
   controllers: [AppController],
   providers: [
     AppService,

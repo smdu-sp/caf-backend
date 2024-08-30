@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateFeriadoDto } from './dto/create-feriado.dto';
 import { UpdateFeriadoDto } from './dto/update-feriado.dto';
-import { Prisma3Service } from 'src/prisma3/prisma3.service';
+import { FeriadosService } from 'src/feriados/feriados.service';
 import { AppService } from 'src/app.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
@@ -9,13 +9,13 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class FeriadoService {
 
   constructor(
-    private prisma3: Prisma3Service,
+    private feriados: FeriadosService,
     private app: AppService,
   ) { }
 
   async gera_log(id_feriado?: string, estado?: any, id_usuario?: string, id_recorrentes?: string) {
 
-    await this.prisma3.log.create({
+    await this.feriados.log.create({
       data: { id_feriado, estado: estado, id_usuario, id_recorrentes }
     })
   }
@@ -29,7 +29,7 @@ export class FeriadoService {
 
     let usuarioFeriado: any;
 
-    usuarioFeriado = await this.prisma3.usuario.findUnique({
+    usuarioFeriado = await this.feriados.usuario.findUnique({
       where: {
         login: login
       },
@@ -38,7 +38,7 @@ export class FeriadoService {
       }
     })
     if (!usuarioFeriado) {
-      await this.prisma3.usuario.create({
+      await this.feriados.usuario.create({
         data: {
           nome: nomeUsuario,
           login,
@@ -53,16 +53,16 @@ export class FeriadoService {
 
     const { nome, data, descricao, nivel, tipo, modo, status } = createFeriadoDto
     if (modo === 0) {
-      const recorrente = await this.prisma3.recorrente.create({
+      const recorrente = await this.feriados.recorrente.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       });
-      const feriado = await this.prisma3.feriados.create({
+      const feriado = await this.feriados.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
       await this.gera_log(feriado.id, feriado, usuarioFeriado.id, null)
       return [recorrente, feriado];
     } else {
-      const criar = await this.prisma3.feriados.create({
+      const criar = await this.feriados.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
       await this.gera_log(criar.id, criar, usuarioFeriado.id, null)
@@ -83,7 +83,7 @@ export class FeriadoService {
 
     let usuarioFeriado: any;
 
-    usuarioFeriado = await this.prisma3.usuario.findUnique({
+    usuarioFeriado = await this.feriados.usuario.findUnique({
       where: {
         login: login
       },
@@ -92,7 +92,7 @@ export class FeriadoService {
       }
     })
     if (!usuarioFeriado) {
-      await this.prisma3.usuario.create({
+      await this.feriados.usuario.create({
         data: {
           nome: nomeUsuario,
           login,
@@ -108,7 +108,7 @@ export class FeriadoService {
     const { nome, data, descricao, nivel, tipo, modo, status } = updateFeriadoDto
     const novadata = data.toString().split("T")[0] + "T00:00:00.000Z";
     if (modoFeriado === 0) {
-      const recorrente = await this.prisma3.recorrente.update({
+      const recorrente = await this.feriados.recorrente.update({
         where: {
           id
         },
@@ -120,7 +120,7 @@ export class FeriadoService {
       await this.gera_log(null, recorrente, usuarioFeriado.id, recorrente.id)
       return recorrente
     } else {
-      const feriados = await this.prisma3.feriados.update({
+      const feriados = await this.feriados.feriados.update({
         where: {
           id
         },
@@ -136,7 +136,7 @@ export class FeriadoService {
 
   @Cron(CronExpression.EVERY_YEAR)
   async gerarDataRecorrente() {
-    const recorrentes = await this.prisma3.recorrente.findMany({
+    const recorrentes = await this.feriados.recorrente.findMany({
       select: {
         id: true,
         nome: true,
@@ -163,18 +163,18 @@ export class FeriadoService {
       status: feriados.status,
       modo: feriados.modo
     }));
-    const result = await this.prisma3.feriados.createMany({
+    const result = await this.feriados.feriados.createMany({
       data: feriados
     });
     return result;
   }
 
   async statusRecorrentes(id: string) {
-    const feriadoAlvo = this.prisma3.recorrente.findUnique({
+    const feriadoAlvo = this.feriados.recorrente.findUnique({
       where: { id },
       select: { id: true, status: true }
     })
-    const feriado = this.prisma3.recorrente.update({
+    const feriado = this.feriados.recorrente.update({
       where: { id: (await feriadoAlvo).id },
       data: { status: (await feriadoAlvo).status === 1 ? 0 : 1 }
     });
@@ -183,7 +183,7 @@ export class FeriadoService {
   }
 
   async atualizarRecorrente(id: string, updateFeriadoDto: UpdateFeriadoDto) {
-    const recorrente = this.prisma3.recorrente.update({
+    const recorrente = this.feriados.recorrente.update({
       where: { id },
       data: updateFeriadoDto
     })
@@ -192,11 +192,11 @@ export class FeriadoService {
   }
 
   async desativarFeraido(id: string) {
-    const feriadoAlvo = this.prisma3.feriados.findUnique({
+    const feriadoAlvo = this.feriados.feriados.findUnique({
       where: { id },
       select: { id: true, status: true }
     })
-    const feriado = this.prisma3.feriados.update({
+    const feriado = this.feriados.feriados.update({
       where: { id: (await feriadoAlvo).id },
       data: { status: (await feriadoAlvo).status === 1 ? 0 : 1 }
     });
@@ -207,16 +207,16 @@ export class FeriadoService {
   async create(createFeriadoDto: CreateFeriadoDto, usuario_id: string) {
     const { nome, data, descricao, nivel, tipo, modo, status } = createFeriadoDto
     if (modo === 0) {
-      const recorrente = await this.prisma3.recorrente.create({
+      const recorrente = await this.feriados.recorrente.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       });
-      const feriado = await this.prisma3.feriados.create({
+      const feriado = await this.feriados.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
       await this.gera_log(null, feriado, usuario_id, recorrente.id)
       return [recorrente, feriado];
     } else {
-      const criar = await this.prisma3.feriados.create({
+      const criar = await this.feriados.feriados.create({
         data: { nome, data, descricao, nivel, tipo, modo, status }
       })
       await this.gera_log(criar.id, criar, usuario_id, null)
@@ -241,10 +241,10 @@ export class FeriadoService {
         } :
         {}),
     };
-    const total = await this.prisma3.feriados.count({ where: { ...searchParams, status } });
+    const total = await this.feriados.feriados.count({ where: { ...searchParams, status } });
     if (total == 0) return { total: 0, pagina: 0, limite: 0, users: [] };
     [pagina, limite] = this.app.verificaLimite(pagina, limite, total);
-    const feriados = await this.prisma3.feriados.findMany({
+    const feriados = await this.feriados.feriados.findMany({
       where: { ...searchParams, status },
       skip: (pagina - 1) * limite,
       take: limite,
@@ -258,7 +258,7 @@ export class FeriadoService {
   }
 
   async verificar(data: Date) {
-    const buscaData = await this.prisma3.feriados.findMany({
+    const buscaData = await this.feriados.feriados.findMany({
       select: {
         id: true,
         nome: true,
@@ -295,7 +295,7 @@ export class FeriadoService {
         } :
         {}),
     };
-    const total = await this.prisma3.feriados.count({
+    const total = await this.feriados.feriados.count({
       where: {
         ...searchParams,
         status: 0,
@@ -304,7 +304,7 @@ export class FeriadoService {
     });
     if (total == 0) return { total: 0, pagina: 0, limite: 0, users: [] };
     [pagina, limite] = this.app.verificaLimite(pagina, limite, total);
-    const feriados = await this.prisma3.feriados.findMany({
+    const feriados = await this.feriados.feriados.findMany({
       where: { ...searchParams, status: 0, data: { lte: data2 || data1 } },
       select: {
         id: true,
@@ -345,7 +345,7 @@ export class FeriadoService {
         } :
         {}),
     };
-    const total = await this.prisma3.feriados.count({
+    const total = await this.feriados.feriados.count({
       where: {
         ...searchParams,
         status,
@@ -357,7 +357,7 @@ export class FeriadoService {
     });
     if (total == 0) return { total: 0, pagina: 0, limite: 0, users: [] };
     [pagina, limite] = this.app.verificaLimite(pagina, limite, total);
-    const feriados = await this.prisma3.feriados.findMany({
+    const feriados = await this.feriados.feriados.findMany({
       where: {
         ...searchParams,
         status,
@@ -378,7 +378,7 @@ export class FeriadoService {
   }
 
   async buscarPorNome(nome: string) {
-    const busca = this.prisma3.feriados.findMany({
+    const busca = this.feriados.feriados.findMany({
       where: {
         nome
       },
@@ -414,7 +414,7 @@ export class FeriadoService {
         } :
         {}),
     };
-    const total = await this.prisma3.recorrente.count({
+    const total = await this.feriados.recorrente.count({
       where: {
         ...searchParams,
         status
@@ -422,7 +422,7 @@ export class FeriadoService {
     });
     if (total == 0) return { total: 0, pagina: 0, limite: 0, users: [] };
     [pagina, limite] = this.app.verificaLimite(pagina, limite, total);
-    const feriados = await this.prisma3.recorrente.findMany({
+    const feriados = await this.feriados.recorrente.findMany({
       where: {
         ...searchParams,
         status
@@ -449,7 +449,7 @@ export class FeriadoService {
   }
 
   async buscarRecorrenteId(id: string) {
-    const recorrente = this.prisma3.recorrente.findUnique({
+    const recorrente = this.feriados.recorrente.findUnique({
       where: { id },
       select: {
         id: true,
@@ -468,7 +468,7 @@ export class FeriadoService {
 
   async bucarUnico(id: string, modo: number) {
     if (modo === 0) {
-      const feriado = this.prisma3.recorrente.findUnique({
+      const feriado = this.feriados.recorrente.findUnique({
         where: {
           id
         }
@@ -476,7 +476,7 @@ export class FeriadoService {
       if (!feriado) throw new ForbiddenException('Nenhum feriado encontrado')
       return feriado
     } else {
-      const feriado = this.prisma3.feriados.findUnique({
+      const feriado = this.feriados.feriados.findUnique({
         where: {
           id
         }

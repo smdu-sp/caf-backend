@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/feriados/client';
 
 @Global()
 @Injectable()
-export class Prisma3Service extends PrismaClient {
+export class FeriadosService extends PrismaClient {
   constructor() {
     super();
   }
