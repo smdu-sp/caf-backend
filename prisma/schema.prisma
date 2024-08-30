@@ -24,6 +24,8 @@ model Usuario {
   email         String      @unique
   permissao     Permissao   @default(USR)
   status        Int         @default(1)
+  rf            String      @unique
+  vinculo       Int         @default(1)
 
   ultimologin   DateTime    @default(now())
   criadoEm      DateTime    @default(now())
@@ -32,8 +34,28 @@ model Usuario {
   unidade_id    String?
   unidade       Unidade?    @relation(fields: [unidade_id], references: [id])
   cargos        Cargo[]
+  especies      Especie_Usuario[]
 
   @@map("usuarios")
+}
+
+model Especie {
+  id          String  @id @default(uuid())
+  nome        String  @unique
+  usuarios    Especie_Usuario[]
+}
+
+model Especie_Usuario {
+  inicio      DateTime
+  termino     DateTime?
+
+  usuario_id  String
+  usuario     Usuario @relation(fields: [usuario_id], references: [id])
+  especie_id  String
+  especie     Especie @relation(fields: [especie_id], references: [id])
+
+  @@id([especie_id, usuario_id])
+  @@map("especies")
 }
 
 model Unidade {
@@ -54,10 +76,11 @@ enum TipoCargo {
 }
 
 model Cargo {
-  id        String  @id @default(uuid())
-  nome      String  @unique
-  codigo    String  @unique
-  status    Boolean @default(true)
+  id        String    @id @default(uuid())
+  nome      String    @unique
+  codigo    String    @unique
+  tipo      TipoCargo @default(COMISSIONADO)
+  status    Boolean   @default(true)
 
   usuarios  Usuario[]
 
