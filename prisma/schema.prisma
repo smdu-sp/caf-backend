@@ -25,7 +25,7 @@ model Usuario {
   email         String      @unique
   permissao     Permissao   @default(USR)
   status        Int         @default(1)
-  rf            String      @unique
+  rf            Int         @unique
   vinculo       Int         @default(1)
 
   ultimologin   DateTime    @default(now())
@@ -86,4 +86,30 @@ model Cargo {
   usuarios  Usuario[]
 
   @@map("cargos")
+}
+
+model TblDados {
+  id              String    @id @default(uuid())
+  numero          Int
+  nome            String
+  vinculo         Int
+  especie         String
+  inicio          DateTime
+  termino         DateTime
+  cargo           Int
+  nomecargo2      String
+  referencia     String
+  unidade        Int
+  nomesetor2     String
+  rel_jur_adm    String
+  tipo            String
+  evento          String
+  inicio_exerc   DateTime
+  titular          String
+  numvinc_tit     Int
+  nomefunc_tit    String
+  inicio_rem       DateTime
+  fim_rem          DateTime
+  observacao      String
+  vaga            Int
 }

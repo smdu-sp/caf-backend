@@ -99,7 +99,7 @@ export class FeriadoService {
           email,
           permissao: 'ADM',
           status: statusUsuario
-        }
+        } 
       }).then((response) => {
         usuarioFeriado = response.login
       })

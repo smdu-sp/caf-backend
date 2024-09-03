@@ -19,6 +19,8 @@ async function main() {
         }
     });
     console.log(root);
+    const dados = await prisma.tblDados.findMany();
+    console.log(dados);
 }
 main()
   .then(async () => {
