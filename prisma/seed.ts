@@ -2,20 +2,20 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 async function main() {
     const root = await prisma.usuario.upsert({
-        where: { login: 'x506640' },
+        where: { login: 'd927014' },
         create: {
-            login: 'x506640',
-            nome: 'Lucas Finatti',
-            email: 'lfinatti@prefeitura.sp.gov.br',
-            status: 1,
-            permissao: 'DEV'
+          login: 'd927014',
+          nome: 'Victor Alexander Menezes de Abreu',
+          email: 'vmabreu@prefeitura.sp.gov.br',
+          status: 1,
+          permissao: 'DEV'
         },
         update: {
-            login: 'x506640',
-            nome: 'Lucas Finatti',
-            email: 'lfinatti@prefeitura.sp.gov.br',
-            status: 1,
-            permissao: 'DEV'
+          login: 'd927014',
+          nome: 'Victor Alexander Menezes de Abreu',
+          email: 'vmabreu@prefeitura.sp.gov.br',
+          status: 1,
+          permissao: 'DEV'
         }
     });
     console.log(root);

@@ -1,9 +1,9 @@
 import { Global, Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/sgu/client';
+import { PrismaClient } from '@prisma/feriados/client';
 
 @Global()
 @Injectable()
-export class Prisma2Service extends PrismaClient {
+export class FeriadosService extends PrismaClient {
   constructor() {
     super();
   }
