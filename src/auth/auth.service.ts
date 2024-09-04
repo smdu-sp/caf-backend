@@ -83,6 +83,7 @@ export class AuthService {
                 email: mail,
                 permissao: 'USR',
                 status: 1,
+                rf: login,
               });
               client.destroy();
               if (novoUsuario)

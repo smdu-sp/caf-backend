@@ -25,4 +25,8 @@ export class CreateUsuarioDto {
 
   @IsNumber({}, { message: 'Status inválido!' })
   status?: number;
+
+  @IsString({ message: 'RF inválido!' })
+  @MinLength(7, { message: 'RF tem de ter ao menos 7 caracteres.' })
+  rf?: string;
 }

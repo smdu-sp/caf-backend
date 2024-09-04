@@ -41,15 +41,15 @@ export class UsuariosService {
   ) {
     if (
       permissao === $Enums.Permissao.DEV &&
-      permissaoCriador === $Enums.Permissao.SUP
-    )
-      permissao = $Enums.Permissao.SUP;
-    if (
-      (permissao === $Enums.Permissao.DEV ||
-        permissao === $Enums.Permissao.SUP) &&
       permissaoCriador === $Enums.Permissao.ADM
     )
       permissao = $Enums.Permissao.ADM;
+    if (
+      (permissao === $Enums.Permissao.DEV ||
+        permissao === $Enums.Permissao.ADM) &&
+      permissaoCriador === $Enums.Permissao.ELO
+    )
+      permissao = $Enums.Permissao.ELO;
     return permissao;
   }
 
@@ -58,6 +58,10 @@ export class UsuariosService {
     if (loguser) throw new ForbiddenException('Login já cadastrado.');
     const emailuser = await this.buscarPorEmail(createUsuarioDto.email);
     if (emailuser) throw new ForbiddenException('Email já cadastrado.');
+    if (createUsuarioDto.rf && createUsuarioDto.rf !== '') {
+      const rfuser = await this.buscarPorRF(createUsuarioDto.rf);
+      if (rfuser) throw new ForbiddenException('RF já cadastrado.');      
+    }
     if (!criador) createUsuarioDto.permissao = 'USR';
     if (criador) {
       const permissaoCriador = await this.retornaPermissao(criador.id);
@@ -134,6 +138,13 @@ export class UsuariosService {
     return usuario;
   }
 
+  async buscarPorRF(rf: string) {
+    const usuario = await this.prisma.usuario.findFirst({
+      where: { servidor: { rf }}
+    });
+    return usuario;
+  }
+
   async atualizar(
     usuario: Usuario,
     id: string,
@@ -144,8 +155,11 @@ export class UsuariosService {
       throw new ForbiddenException('Operação não autorizada para este usuário.')
     if (updateUsuarioDto.login) {
       const usuario = await this.buscarPorLogin(updateUsuarioDto.login);
-      if (usuario && usuario.id !== id)
-        throw new ForbiddenException('Login já cadastrado.');
+      if (usuario && usuario.id !== id) throw new ForbiddenException('Login já cadastrado.');
+    }
+    if (updateUsuarioDto.rf && updateUsuarioDto.rf !== '') {
+      const rfuser = await this.buscarPorRF(updateUsuarioDto.rf);
+      if (rfuser && rfuser.id !== id) throw new ForbiddenException('RF já cadastrado.');      
     }
     if (updateUsuarioDto.permissao)
       updateUsuarioDto.permissao = this.validaPermissaoCriador(

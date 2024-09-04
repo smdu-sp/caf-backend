@@ -11,105 +11,157 @@ datasource db {
 }
 
 enum Permissao {
-  DEV
-  SUP
-  ADM
-  USR
-  ELO
+  DEV //desenvolvedor - pode tudo
+  ADM //funcionário do rh - "pode tudo"
+  ELO //elo de unidade - pode acessar dados da sua unidade
+  USR //usuario comum - pode ver seus próprios dados
+}
+
+enum Tipo_Usuario {
+  SERVIDOR
+  TEMPORARIO
+  ESTAGIARIO
 }
 
 model Usuario {
-  id            String      @id @default(uuid())
+  id            String        @id @default(uuid())
+  tipo          Tipo_Usuario  @default(SERVIDOR)
   nome          String
-  login         String      @unique
-  email         String      @unique
-  permissao     Permissao   @default(USR)
-  status        Int         @default(1)
-  rf            Int         @unique
-  vinculo       Int         @default(1)
+  login         String        @unique
+  email         String        @unique
+  permissao     Permissao     @default(USR)
+  status        Int           @default(1)
 
-  ultimologin   DateTime    @default(now())
-  criadoEm      DateTime    @default(now())
-  atualizadoEm  DateTime    @default(now()) @updatedAt
+  ultimologin   DateTime      @default(now())
+  criadoEm      DateTime      @default(now())
+  atualizadoEm  DateTime      @default(now()) @updatedAt
 
   unidade_id    String?
-  unidade       Unidade?    @relation(fields: [unidade_id], references: [id])
-  cargos        Cargo[]
-  especies      Especie_Usuario[]
+  unidade       Unidade?      @relation(fields: [unidade_id], references: [id])
+  servidor      Servidor?
 
   @@map("usuarios")
+}
+
+model Servidor {
+  usuario_id    String
+  usuario       Usuario       @relation(fields: [usuario_id], references: [id])
+  rf            String        @unique
+
+  cargos        Servidor_Cargo[] @relation(name: "servidor_id")
+  titulares     Servidor_Cargo[] @relation(name: "titular_rf")
+
+  @@id([usuario_id])
+  @@map("servidores")
 }
 
 model Especie {
   id          String  @id @default(uuid())
   nome        String  @unique
-  usuarios    Especie_Usuario[]
-}
+  cargos      Servidor_Cargo[]
 
-model Especie_Usuario {
-  inicio      DateTime
-  termino     DateTime?
-
-  usuario_id  String
-  usuario     Usuario @relation(fields: [usuario_id], references: [id])
-  especie_id  String
-  especie     Especie @relation(fields: [especie_id], references: [id])
-
-  @@id([especie_id, usuario_id])
   @@map("especies")
 }
 
-model Unidade {
-  id     String  @id @default(uuid())
-  nome   String  @unique
-  sigla  String  @unique
-  codigo String  @unique
-  status Boolean @default(true)
+model Servidor_Cargo {
+  inicio                    DateTime
+  termino                   DateTime?
+  inicio_exerc              DateTime? //perguntar
+  vinculo                   Int @default(1)
+  inicio_rem                DateTime? //perguntar
+  fim_rem                   DateTime? //perguntar
+  observacao                String?
+  vaga                      Int //perguntar
 
-  usuarios Usuario[]
+  servidor_id               String
+  servidor                  Servidor              @relation(fields: [servidor_id], references: [usuario_id], name: "servidor_id")
+  especie_id                String            
+  especie                   Especie               @relation(fields: [especie_id], references: [id])
+  cargo_id                  String            
+  cargo                     Cargo                 @relation(fields: [cargo_id], references: [id])
+  cargo_referencia_id       String
+  cargo_referencia          Cargo_Referencia      @relation(fields: [cargo_referencia_id], references: [id])
+  tipo_evento_id            String
+  tipo_evento               Tipo_Evento           @relation(fields: [tipo_evento_id], references: [id])
+  unidade_id                String
+  unidade                   Unidade               @relation(fields: [unidade_id], references: [id])
+  titular_rf                String?
+  titular                   Servidor?             @relation(fields: [titular_rf], references: [rf], name: "titular_rf")
+
+  @@id([especie_id, servidor_id, cargo_id])
+  @@map("servidores_cargos")
+}
+
+model Unidade {
+  id          String  @id @default(uuid())
+  nome        String  @unique
+  sigla       String  @unique
+  codigo      String  @unique
+  status      Boolean @default(true)
+
+  usuarios    Usuario[]
+  servidores  Servidor_Cargo[]
 
   @@map("unidades")
 }
 
-enum TipoCargo {
+enum Tipo_Cargo {
   EFETIVO
   COMISSIONADO
 }
 
-model Cargo {
-  id        String    @id @default(uuid())
-  nome      String    @unique
-  codigo    String    @unique
-  tipo      TipoCargo @default(COMISSIONADO)
-  status    Boolean   @default(true)
+model Tipo_Evento {
+  id          String  @id @default(uuid())
+  nome        String  @unique
 
-  usuarios  Usuario[]
+  servidores  Servidor_Cargo[]
+
+  @@map("tipos_eventos")
+}
+
+model Cargo {
+  id          String    @id @default(uuid())
+  nome        String    @unique
+  codigo      String    @unique
+  tipo        Tipo_Cargo @default(COMISSIONADO)
+  status      Boolean   @default(true)
+
+  servidores  Servidor_Cargo[]
 
   @@map("cargos")
 }
 
-model TblDados {
-  id              String    @id @default(uuid())
-  numero          Int
-  nome            String
-  vinculo         Int
-  especie         String
-  inicio          DateTime
-  termino         DateTime
-  cargo           Int
-  nomecargo2      String
-  referencia     String
-  unidade        Int
-  nomesetor2     String
-  rel_jur_adm    String
-  tipo            String
-  evento          String
-  inicio_exerc   DateTime
-  titular          String
-  numvinc_tit     Int
-  nomefunc_tit    String
-  inicio_rem       DateTime
-  fim_rem          DateTime
-  observacao      String
-  vaga            Int
+model Cargo_Referencia {
+  id          String  @id @default(uuid())
+  nome        String  @unique
+
+  servidores  Servidor_Cargo[]
+
+  @@map("cargos_referencias")
 }
+
+// model TblDados {
+//   id              String    @id @default(uuid())
+//   numero          Int
+//   nome            String
+//   vinculo         Int
+//   especie         String
+//   inicio          DateTime
+//   termino         DateTime
+//   cargo           Int
+//   nomecargo2      String
+//   referencia     String
+//   unidade        Int
+//   nomesetor2     String
+//   rel_jur_adm    String
+//   tipo            String
+//   evento          String
+//   inicio_exerc   DateTime
+//   titular          String
+//   numvinc_tit     Int
+//   nomefunc_tit    String
+//   inicio_rem       DateTime
+//   fim_rem          DateTime
+//   observacao      String
+//   vaga            Int
+// }

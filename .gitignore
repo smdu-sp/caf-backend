@@ -3,6 +3,8 @@
 /node_modules
 .env
 /prisma/migrations
+/prisma/sgu/migrations
+/prisma/feriados/migrations
 
 # Logs
 logs

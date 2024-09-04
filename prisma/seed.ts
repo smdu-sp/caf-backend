@@ -7,6 +7,7 @@ async function main() {
           login: 'd927014',
           nome: 'Victor Alexander Menezes de Abreu',
           email: 'vmabreu@prefeitura.sp.gov.br',
+          rf: '9270141',
           status: 1,
           permissao: 'DEV'
         },
@@ -15,6 +16,7 @@ async function main() {
           nome: 'Victor Alexander Menezes de Abreu',
           email: 'vmabreu@prefeitura.sp.gov.br',
           status: 1,
+          rf: '9270141',
           permissao: 'DEV'
         }
     });
