@@ -48,11 +48,11 @@ npx prisma migrate dev
 ```
 
 ```bash
-npx prisma generate --schema=sgu/schema.prisma
+npx prisma generate --schema=prisma/sgu/schema.prisma
 ```
 
 ```bash
-npx prisma generate --schema=feriados/schema.prisma
+npx prisma generate --schema=prisma/feriados/schema.prisma
 ```
 
 ```bash

@@ -7,7 +7,6 @@ async function main() {
           login: 'd927014',
           nome: 'Victor Alexander Menezes de Abreu',
           email: 'vmabreu@prefeitura.sp.gov.br',
-          rf: '9270141',
           status: 1,
           permissao: 'DEV'
         },
@@ -16,13 +15,10 @@ async function main() {
           nome: 'Victor Alexander Menezes de Abreu',
           email: 'vmabreu@prefeitura.sp.gov.br',
           status: 1,
-          rf: '9270141',
           permissao: 'DEV'
         }
     });
     console.log(root);
-    const dados = await prisma.tblDados.findMany();
-    console.log(dados);
 }
 main()
   .then(async () => {
