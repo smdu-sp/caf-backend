@@ -58,10 +58,7 @@ export class UsuariosService {
     if (loguser) throw new ForbiddenException('Login já cadastrado.');
     const emailuser = await this.buscarPorEmail(createUsuarioDto.email);
     if (emailuser) throw new ForbiddenException('Email já cadastrado.');
-    if (createUsuarioDto.rf && createUsuarioDto.rf !== '') {
-      const rfuser = await this.buscarPorRF(createUsuarioDto.rf);
-      if (rfuser) throw new ForbiddenException('RF já cadastrado.');      
-    }
+
     if (!criador) createUsuarioDto.permissao = 'USR';
     if (criador) {
       const permissaoCriador = await this.retornaPermissao(criador.id);
@@ -71,11 +68,13 @@ export class UsuariosService {
           permissaoCriador,
         );
     }
+
     const usuario = await this.prisma.usuario.create({
       data: { 
         ...createUsuarioDto
       }
     });
+
     if (!usuario)
       throw new InternalServerErrorException(
         'Não foi possível criar o usuário, tente novamente.',
@@ -83,41 +82,9 @@ export class UsuariosService {
     return usuario;
   }
 
-  async buscarTudo(
-    usuario: Usuario = null,
-    pagina: number = 1,
-    limite: number = 10,
-    status: number = 1,
-    busca?: string,
-    permissao?: string,
-    unidade_id?: string,
-  ) {
-    [pagina, limite] = this.app.verificaPagina(pagina, limite);
-    const searchParams = {
-      ...(busca && { OR: [
-        { nome: { contains: busca } },
-        { login: { contains: busca } },
-        { email: { contains: busca } },
-      ]}),
-      ...(unidade_id !== '' && { unidade_id }),
-      ...(permissao !== '' && { permissao: $Enums.Permissao[permissao] }),
-      ...(usuario.permissao !== 'DEV' ? { status: 1 } : (status !== 4 && { status })),
-    };
-    const total = await this.prisma.usuario.count({ where: searchParams });
-    if (total == 0) return { total: 0, pagina: 0, limite: 0, users: [] };
-    [pagina, limite] = this.app.verificaLimite(pagina, limite, total);
-    const usuarios = await this.prisma.usuario.findMany({
-      where: searchParams,
-      orderBy: { nome: 'asc' },
-      skip: (pagina - 1) * limite,
-      take: limite,
-    });
-    return {
-      total: +total,
-      pagina: +pagina,
-      limite: +limite,
-      data: usuarios,
-    };
+  async buscarTudo(){
+    const listUsuario = await this.prisma.usuario.findMany()
+    return listUsuario
   }
 
   async buscarPorId(id: string) {
@@ -132,17 +99,9 @@ export class UsuariosService {
   }
 
   async buscarPorLogin(login: string) {
-    const usuario = await this.prisma.usuario.findUnique({
+    return await this.prisma.usuario.findUnique({
       where: { login },
     });
-    return usuario;
-  }
-
-  async buscarPorRF(rf: string) {
-    const usuario = await this.prisma.usuario.findFirst({
-      where: { servidor: { rf }}
-    });
-    return usuario;
   }
 
   async atualizar(
@@ -152,20 +111,25 @@ export class UsuariosService {
   ) {
     const usuarioLogado = await this.buscarPorId(usuario.id);
     if (!usuarioLogado || ['TEC', 'USR'].includes(usuarioLogado.permissao) && id !== usuarioLogado.id)
-      throw new ForbiddenException('Operação não autorizada para este usuário.')
+      throw new ForbiddenException('Operação não autorizada para este usuário.');
+
     if (updateUsuarioDto.login) {
-      const usuario = await this.buscarPorLogin(updateUsuarioDto.login);
-      if (usuario && usuario.id !== id) throw new ForbiddenException('Login já cadastrado.');
+      const usuarioExistente = await this.buscarPorLogin(updateUsuarioDto.login);
+      if (usuarioExistente && usuarioExistente.id !== id) throw new ForbiddenException('Login já cadastrado.');
     }
-    if (updateUsuarioDto.rf && updateUsuarioDto.rf !== '') {
-      const rfuser = await this.buscarPorRF(updateUsuarioDto.rf);
-      if (rfuser && rfuser.id !== id) throw new ForbiddenException('RF já cadastrado.');      
+
+    if (updateUsuarioDto.email) {
+      const usuarioPorEmail = await this.buscarPorEmail(updateUsuarioDto.email);
+      if (usuarioPorEmail && usuarioPorEmail.id !== id) throw new ForbiddenException('Email já cadastrado.');
     }
-    if (updateUsuarioDto.permissao)
+
+    if (updateUsuarioDto.permissao) {
       updateUsuarioDto.permissao = this.validaPermissaoCriador(
         updateUsuarioDto.permissao,
         usuarioLogado.permissao,
       );
+    }
+
     const usuarioAtualizado = await this.prisma.usuario.update({
       data: updateUsuarioDto,
       where: { id },
@@ -193,9 +157,9 @@ export class UsuariosService {
   }
 
   async validaUsuario(id: string) {
-    const usuario = await this.prisma.usuario.findUnique({ where: { id }});
-    if (!usuario) throw new ForbiddenException('Usuário não encontrado.');
-    if (usuario.status !== 1) throw new ForbiddenException('Usuário inativo.');
+    const usuario = await this.prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) throw new ForbiddenException('Usuário não encontrado.');
+    if (usuario.status !== 1) throw new ForbiddenException('Usuário inativo.');
     return usuario;
   }
 
@@ -206,18 +170,21 @@ export class UsuariosService {
       const usuarioReativado = await this.prisma.usuario.update({ where: { id: usuarioExiste.id }, data: { status: 1 } });
       return usuarioReativado;
     }
+
     const client: Client = createClient({
       url: process.env.LDAP_SERVER,
     });
+
     await new Promise<void>((resolve, reject) => {
       client.bind(`${process.env.USER_LDAP}${process.env.LDAP_DOMAIN}`, process.env.PASS_LDAP, (err) => {
         if (err) {
           client.destroy();
-          reject(new UnauthorizedException('Credenciais incorretas 2.'));
+          reject(new UnauthorizedException('Credenciais incorretas.'));
         }
         resolve();
       });
     });
+
     const usuario_ldap = await new Promise<any>((resolve, reject) => {
       client.search(
         process.env.LDAP_BASE,
@@ -258,5 +225,19 @@ export class UsuariosService {
       nome: usuario_ldap.nome,
       email: usuario_ldap.email
     };
+  }
+
+  async removeAll() {
+    return this.prisma.usuario.deleteMany();
+  }
+  
+  async removeAllExceptOne() {
+    return this.prisma.usuario.deleteMany({
+      where: {
+        email: {
+          not: "vmabreu@prefeitura.sp.gov.br"
+        }
+      }
+    });
   }
 }

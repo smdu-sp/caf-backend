@@ -14,7 +14,11 @@ import { IsPublic } from './decorators/is-public.decorator';
 import { UsuarioAtual } from './decorators/usuario-atual.decorator';
 import { Usuario } from '@prisma/client';
 import { RefreshAuthGuard } from './guards/refresh.guard';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { LoginDto } from './dto/login.dto';
 
+@ApiBearerAuth()
+@ApiTags('Auth')
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -23,6 +27,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @IsPublic()
+  @ApiBody({ type: LoginDto, description: 'Dados necessários para criar uma nova unidade.' })
+  @ApiResponse({ status: 201, description: 'Unidade criada com sucesso.' })
   login(@Request() req: AuthRequest) {
     return this.authService.login(req.user);
   }

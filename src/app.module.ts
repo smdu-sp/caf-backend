@@ -9,10 +9,17 @@ import { RoleGuard } from './auth/guards/role.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { FeriadoModule } from './feriado/feriado.module';
 import { SGUModule } from './sgu/sgu.module';
+import { UnidadeModule } from './unidade/unidade.module';
+import { ServidorCargoModule } from './servidor-cargo/servidor-cargo.module';
+import { ServidorModule } from './servidor/servidor.module';
+import { CargoModule } from './cargo/cargo.module';
+import { CargosReferenciasModule } from './cargos-referencias/cargos-referencias.module';
+import { EspecieModule } from './especie/especie.module';
+import { TipoEventoModule } from './tipo-evento/tipo-evento.module';
 
 @Global()
 @Module({
-  imports: [UsuariosModule, AuthModule, PrismaModule, FeriadoModule, SGUModule],
+  imports: [CargoModule, UsuariosModule, UnidadeModule, AuthModule, PrismaModule, FeriadoModule, SGUModule, ServidorModule, ServidorCargoModule, CargosReferenciasModule, EspecieModule, TipoEventoModule],
   controllers: [AppController],
   providers: [
     AppService,

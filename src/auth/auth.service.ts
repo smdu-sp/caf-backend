@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsuarioToken } from './models/UsuarioToken';
 import { Client, createClient } from 'ldapjs';
 import { UsuarioJwt } from './models/UsuarioJwt';
+import { CreateUsuarioDto, Tipo_Usuario } from 'src/usuarios/dto/create-usuario.dto';
 
 @Injectable()
 export class AuthService {
@@ -42,11 +43,11 @@ export class AuthService {
     let usuario = await this.usuariosService.buscarPorLogin(login);
     if (usuario && usuario.status === 3)
       throw new UnauthorizedException(
-        'Usuário aguardando aprovação de acesso ao sistema.',
+        'Usuário aguardando aprovação de acesso ao sistema.',
       );
     if (usuario && usuario.status === 2)
-      throw new UnauthorizedException('Usuário inativo.');
-    if (process.env.ENVIRONMENT == 'local') {
+      throw new UnauthorizedException('Usuário inativo.');
+    if (process.env.ENVIRONMENT === 'local') {
       if (usuario) return usuario;
     }
     const client: Client = createClient({
@@ -73,32 +74,46 @@ export class AuthService {
           (err, res) => {
             if (err) {
               client.destroy();
-              reject();
+              reject(new UnauthorizedException('Erro na busca LDAP.'));
             }
             res.on('searchEntry', async (entry) => {
-              const { name, mail } = Object.fromEntries(entry.pojo.attributes.map(({ type, values }) => [type, values[0]]));
-              const novoUsuario = await this.usuariosService.criar({
-                nome: name,
-                login,
-                email: mail,
-                permissao: 'USR',
-                status: 1,
-                rf: login,
-              });
-              client.destroy();
-              if (novoUsuario)
-                resolve(this.usuariosService.buscarPorLogin(novoUsuario.login));
-              reject(
-                new UnauthorizedException(
-                  'Não foi possível fazer login no momento.',
-                ),
+              const { name, mail } = Object.fromEntries(
+                entry.pojo.attributes.map(({ type, values }) => [type, values[0]])
               );
+              try {
+                const novoUsuario = await this.usuariosService.criar({
+                  nome: name,
+                  login,
+                  email: mail,
+                  permissao: 'USR',
+                  status: 1,
+                  tipo: Tipo_Usuario.SERVIDOR,
+                  criadoEm: undefined
+                });
+                if (novoUsuario) {
+                  resolve(await this.usuariosService.buscarPorLogin(novoUsuario.login));
+                } else {
+                  reject(new UnauthorizedException('Não foi possível criar o usuário.'));
+                }
+              } catch (error) {
+                reject(new UnauthorizedException('Erro ao criar o usuário.'));
+              } finally {
+                client.destroy();
+              }
             });
-          },
+            res.on('error', (err) => {
+              client.destroy();
+              reject(new UnauthorizedException('Erro na busca LDAP.'));
+            });
+            res.on('end', () => {
+              if (!usuario) {
+                reject(new UnauthorizedException('Não foi possível fazer login no momento.'));
+              }
+            });
+          }
         );
       });
     }
-    client.destroy();
     return usuario;
   }
 }
